@@ -10,15 +10,39 @@
 //   });
 // };
 
+const bodyParser = require('body-parser');
+
 module.exports = function(app) {
-  const globSync   = require('glob').sync;
-  const mocks      = globSync('./mocks/**/*.js', { cwd: __dirname }).map(require);
-  const proxies    = globSync('./proxies/**/*.js', { cwd: __dirname }).map(require);
+	app.use(bodyParser.urlencoded({ extended: true}));
 
-  // Log proxy requests
-  const morgan = require('morgan');
-  app.use(morgan('dev'));
+	app.post('/token', function(req, res){
+		console.log(res);
+		
+		if(req.body.username === 'shivam' &&
+			req.body.password === 'password') {
+				res.send( { access_token: 'secretcode'});
+			} else {
+				res.status(400).send({ error: 'invalid_grant'});
+			}
 
-  mocks.forEach(route => route(app));
-  proxies.forEach(route => route(app));
-};
+
+	});
+
+	app.get('/api/students', function(req, res) {
+		
+		if( req.headers.authorization !== 'Bearer secretcode'){
+			return res.status(401).send('Unauthorized');
+		}
+
+		return res.status(200).send({
+			students: [
+				{ id: 1, name: 'Shivam', age: 23},
+			    { id: 2, name: 'Akhil',  age: 52}
+			]
+		});
+
+
+
+	});
+
+}
